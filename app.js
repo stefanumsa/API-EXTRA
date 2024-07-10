@@ -15,25 +15,102 @@ const dotenv = require('dotenv');
 const LocalStrategy = require('passport-local').Strategy;
 const SQLiteStore = require('connect-sqlite3')(session);
 const { Sequelize, DataTypes } = require('sequelize');
-const port = 3001;
+const mysql = require('mysql2');
+const port = 3004;
+
+
+
+app.use(bodyParser.urlencoded({ extended: false }));
+app.set('view engine', 'pug');
+
+// Configuración de BodyParser
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Configuración de la base de datos
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root', // Cambia esto a tu usuario de MySQL
+    password: 'elprimo', // Cambia esto a tu contraseña de MySQL
+    database: 'calculadoraIMC' // Cambia esto a tu base de datos de MySQL
+});
+
+db.connect((err) => {
+    if (err) {
+        throw err;
+    }
+    console.log('Conectado a la base de datos MySQL');
+});
+
+// Hacer que la conexión de la base de datos esté disponible globalmente
+global.db = db;
+
+// Importar las rutas de la API
+const bmiRoutes = require('./routes/bmiRoutes');
+app.use('/api', bmiRoutes);
+
+// Configuración de las vistas
+app.set('view engine', 'pug');
+app.set('views', './views');
+
+// Archivos estáticos
+app.use(express.static('public'));
+
+// Importar rutas antiguas (si necesitas mantenerlas)
+const oldRoutes = require('./routes/index');
+app.use('/', oldRoutes);
+
+
+
+// espacio
+
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Configurar el middleware para analizar los datos del formulario
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Configurar el motor de plantillas para usar Pug
+app.set('view engine', 'pug');
+app.set('views', './views');
+
+// Servir archivos estáticos desde la carpeta "public"
+app.use(express.static('public'));
+
+// Importar y usar las rutas definidas en resultado.js
+const resultadoRoute = require('./routes/resultado2');
+app.use('/', resultadoRoute);
+
+// Define la ruta /calculadora-imc2
+app.get('/calculadora-imc2', (req, res) => {
+  res.render('calculadora-imc2');
+});
+
+app.get('/opciones', (req, res) => {
+  res.render('opciones');
+});
 
 
 
 
-
-// Middleware para analizar cuerpos JSON
-app.use(express.json());
-
-// Middleware para analizar cuerpos con URL codificada
-app.use(express.urlencoded({ extended: true }));
-
-// Configuración del motor de plantillas (si usas EJS, Pug, etc.)
-app.set('view engine', 'ejs');
+// Configura el motor de plantillas Pug
+app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
 
-// Importar y usar las rutas
-const userRoutes = require('./routes/registrar-usuario');
-app.use('/api/users', userRoutes);
+// Define la ruta /informacion
+app.get('/informacion', (req, res) => {
+  res.render('informacion');
+});
+
+// Configuración de Pug como motor de plantillas
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
+// Ruta para los archivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware para analizar el cuerpo de los formularios
+app.use(bodyParser.urlencoded({ extended: true }));
+
 
 // Configuración de la sesión
 app.use(session({
@@ -145,39 +222,11 @@ app.get('/logout', async (req, res) => {
 });
 
 
-app.set('view engine', 'pug');
-app.set('views', './views');
-
-app.use(express.static('public'));
-
-// Ruta para la página de inicio
-app.get('/', (req, res) => {
-  res.render('index');
-});
-
-// Ruta para la página de imágenes del espacio
-app.get('/imagenes', (req, res) => {
-  res.render('imagenes');
-});
-
-
-// Configuración de vistas y motor de plantillas Pug
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
-
-// Rutas estáticas (archivos públicos)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Ruta para renderizar la página del sistema solar
-app.get('/sistema', (req, res) => {
-  res.render('sistema');
-});
 
 
 // Rutas
 app.use('/', require('./routes/index'));
 app.use('/auth', require('./routes/auth'));
-app.use('/celestial', require('./routes/celestial'));
 
 const loginRouter = require('./routes/login');
 const registrarUsuarioRouter = require('./routes/registrar-usuario');
@@ -191,7 +240,7 @@ app.use('/login', loginRouter);
 app.use('/registro', registroRouter);
 app.use('/registrar-usuario', registrarUsuarioRouter);
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3004;
 app.listen(PORT, () => {
-    console.log('Servidor escuchando en el puerto 3001');
+    console.log('Servidor escuchando en el puerto 3004');
 });
